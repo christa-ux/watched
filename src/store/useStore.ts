@@ -35,6 +35,9 @@ interface AppState {
     totalEpisodes: number;
     currentlyWatching: number;
   };
+
+  // Sync
+  loadFromServer: (data: { shows: WatchedShow[]; movies: WatchedMovie[]; lists: CustomList[] }) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -257,6 +260,14 @@ export const useStore = create<AppState>()(
           totalEpisodes,
           currentlyWatching,
         };
+      },
+
+      loadFromServer: (data) => {
+        set({
+          shows: data.shows || [],
+          movies: data.movies || [],
+          lists: data.lists || [],
+        });
       },
     }),
     {
