@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import { connectDatabase } from './config/database';
 import { configurePassport } from './config/passport';
@@ -11,8 +12,9 @@ import authRoutes from './routes/auth';
 import googleRoutes from './routes/google';
 import syncRoutes from './routes/sync';
 
-// Load environment variables
-dotenv.config();
+// Load shared root env first, then let server/.env override it when present.
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
