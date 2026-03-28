@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Home, Tv, Film, ListVideo, Search, Sparkles, LogOut, User } from 'lucide-react';
+import { Home, Tv, Film, ListVideo, Search, Sparkles, LogOut, User, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { friendsApi } from '../api/friends';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: Home },
@@ -15,6 +16,15 @@ const navItems = [
 export default function Navbar() {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    friendsApi.getRequests().then((requests) => {
+      setPendingRequestCount(requests.filter((r) => !r.initiatedByMe).length);
+    }).catch(() => {});
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     await logout();
@@ -47,6 +57,28 @@ export default function Navbar() {
               </NavLink>
             ))}
 
+            {/* Friends nav item with badge */}
+            {isAuthenticated && (
+              <NavLink
+                to="/friends"
+                className={({ isActive }) =>
+                  `relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-indigo-50 text-indigo-600'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`
+                }
+              >
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Friends</span>
+                {pendingRequestCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {pendingRequestCount}
+                  </span>
+                )}
+              </NavLink>
+            )}
+
             {/* Auth section */}
             <div className="ml-2 border-l border-gray-200 pl-2">
               {isLoading ? (
@@ -57,11 +89,12 @@ export default function Navbar() {
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
                   >
-                    {user.avatar ? (
+                    {user.avatar && !avatarError ? (
                       <img
                         src={user.avatar}
                         alt={user.name}
                         className="h-6 w-6 rounded-full"
+                        onError={() => setAvatarError(true)}
                       />
                     ) : (
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">

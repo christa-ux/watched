@@ -7,6 +7,7 @@ import Movies from './pages/Movies';
 import Lists from './pages/Lists';
 import Search from './pages/Search';
 import Assistant from './pages/Assistant';
+import Friends from './pages/Friends';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -22,6 +23,7 @@ function App() {
             <Route path="lists" element={<Lists />} />
             <Route path="search" element={<Search />} />
             <Route path="assistant" element={<Assistant />} />
+            <Route path="friends" element={<Friends />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
           </Route>

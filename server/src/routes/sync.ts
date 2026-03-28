@@ -39,15 +39,29 @@ router.post('/push', async (req: Request, res: Response): Promise<void> => {
     const authUser = getUser(res);
     const { shows, movies, lists } = req.body as SyncData;
 
-    // Convert watchedEpisodes objects to Maps for Mongoose
+    // Fetch existing data to preserve server-side coWatchers
+    const existing = await User.findById(authUser._id);
+    const existingShowCoWatchers = new Map(
+      (existing?.shows || []).map((s) => [s.id, s.coWatchers || []])
+    );
+    const existingMovieCoWatchers = new Map(
+      (existing?.movies || []).map((m) => [m.id, m.coWatchers || []])
+    );
+
     const processedShows = shows.map((show) => ({
       ...show,
+      coWatchers: show.coWatchers?.length ? show.coWatchers : (existingShowCoWatchers.get(show.id) || []),
       watchedEpisodes: new Map(Object.entries(show.watchedEpisodes || {})),
+    }));
+
+    const processedMovies = movies.map((movie) => ({
+      ...movie,
+      coWatchers: movie.coWatchers?.length ? movie.coWatchers : (existingMovieCoWatchers.get(movie.id) || []),
     }));
 
     await User.findByIdAndUpdate(authUser._id, {
       shows: processedShows,
-      movies: movies || [],
+      movies: processedMovies,
       lists: lists || [],
     });
 

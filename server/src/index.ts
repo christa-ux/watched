@@ -11,6 +11,7 @@ import { configurePassport } from './config/passport';
 import authRoutes from './routes/auth';
 import googleRoutes from './routes/google';
 import syncRoutes from './routes/sync';
+import friendsRoutes from './routes/friends';
 
 // Load shared root env first, then let server/.env override it when present.
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -42,6 +43,7 @@ configurePassport();
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', googleRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/friends', friendsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

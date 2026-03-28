@@ -1,21 +1,39 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Tv, Search } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import ShowCard from '../components/ShowCard';
 import EpisodeTracker from '../components/EpisodeTracker';
-import type { WatchedShow } from '../types';
+import CoWatchModal from '../components/CoWatchModal';
+import { friendsApi } from '../api/friends';
+import type { WatchedShow, CoWatcher, CoWatcherWithProgress } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const FAVORITE_SHOWS_LIST = 'Favorite Shows';
 
 export default function Shows() {
+  const { isAuthenticated } = useAuth();
   const shows = useStore((state) => state.shows);
   const removeShow = useStore((state) => state.removeShow);
   const getWatchedEpisodesCount = useStore((state) => state.getWatchedEpisodesCount);
+  const updateShowCoWatchers = useStore((state) => state.updateShowCoWatchers);
   const lists = useStore((state) => state.lists);
   const createList = useStore((state) => state.createList);
   const addToList = useStore((state) => state.addToList);
   const removeFromList = useStore((state) => state.removeFromList);
+
+  const [selectedShow, setSelectedShow] = useState<WatchedShow | null>(null);
+  const [coWatchShow, setCoWatchShow] = useState<WatchedShow | null>(null);
+  const [filter, setFilter] = useState<'all' | 'watching' | 'completed'>('all');
+  const [coWatchProgress, setCoWatchProgress] = useState<Record<number, CoWatcherWithProgress[]>>({});
+
+  // Fetch co-watcher progress for all shows
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    friendsApi.getCowatchProgress().then((data) => {
+      setCoWatchProgress(data.shows as Record<number, CoWatcherWithProgress[]>);
+    }).catch(() => {});
+  }, [isAuthenticated, shows]);
 
   const favoriteList = lists.find((l) => l.name === FAVORITE_SHOWS_LIST);
 
@@ -50,17 +68,21 @@ export default function Shows() {
     },
     [favoriteList, isShowFavorite, createList, addToList, removeFromList]
   );
-  const [selectedShow, setSelectedShow] = useState<WatchedShow | null>(null);
-  const [filter, setFilter] = useState<'all' | 'watching' | 'completed'>('all');
+
+  const handleSaveCoWatchers = async (coWatchers: CoWatcher[]) => {
+    if (!coWatchShow) return;
+    updateShowCoWatchers(coWatchShow.id, coWatchers);
+    await friendsApi.updateShowCoWatchers(coWatchShow.id, coWatchers);
+    // Refresh co-watcher progress
+    friendsApi.getCowatchProgress().then((data) => {
+      setCoWatchProgress(data.shows as Record<number, CoWatcherWithProgress[]>);
+    }).catch(() => {});
+  };
 
   const filteredShows = shows.filter((show) => {
     const watchedCount = getWatchedEpisodesCount(show.id);
-    if (filter === 'watching') {
-      return watchedCount > 0 && watchedCount < show.totalEpisodes;
-    }
-    if (filter === 'completed') {
-      return watchedCount === show.totalEpisodes;
-    }
+    if (filter === 'watching') return watchedCount > 0 && watchedCount < show.totalEpisodes;
+    if (filter === 'completed') return watchedCount === show.totalEpisodes;
     return true;
   });
 
@@ -78,9 +100,7 @@ export default function Shows() {
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                filter === f
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                filter === f ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               {f}
@@ -96,9 +116,11 @@ export default function Shows() {
               key={show.id}
               show={show}
               watchedCount={getWatchedEpisodesCount(show.id)}
+              coWatcherProgress={coWatchProgress[show.id]}
               onRemove={() => removeShow(show.id)}
               onClick={() => setSelectedShow(show)}
               onFavorite={() => toggleFavorite(show)}
+              onCoWatch={() => setCoWatchShow(show)}
               isFavorite={isShowFavorite(show.id)}
             />
           ))}
@@ -128,6 +150,15 @@ export default function Shows() {
 
       {selectedShow && (
         <EpisodeTracker show={selectedShow} onClose={() => setSelectedShow(null)} />
+      )}
+
+      {coWatchShow && (
+        <CoWatchModal
+          title={coWatchShow.name}
+          currentCoWatchers={coWatchShow.coWatchers ?? []}
+          onSave={handleSaveCoWatchers}
+          onClose={() => setCoWatchShow(null)}
+        />
       )}
     </div>
   );

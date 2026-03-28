@@ -15,6 +15,7 @@ export interface IUserDocument extends Document {
     totalSeasons: number;
     totalEpisodes: number;
     watchedEpisodes: Map<string, number[]>;
+    coWatchers: Array<{ userId: string; name: string; avatar: string | null }>;
   }>;
   movies: Array<{
     id: number;
@@ -23,6 +24,7 @@ export interface IUserDocument extends Document {
     addedAt: string;
     watched: boolean;
     watchedAt: string | null;
+    coWatchers: Array<{ userId: string; name: string; avatar: string | null }>;
   }>;
   lists: Array<{
     id: string;
@@ -35,6 +37,12 @@ export interface IUserDocument extends Document {
       posterPath: string | null;
       addedAt: string;
     }>;
+  }>;
+  friends: Array<{
+    userId: mongoose.Types.ObjectId;
+    status: 'pending' | 'accepted';
+    initiatedBy: mongoose.Types.ObjectId;
+    createdAt: Date;
   }>;
   createdAt: Date;
   updatedAt: Date;
@@ -56,6 +64,12 @@ const customListSchema = new Schema({
   items: [listItemSchema],
 }, { _id: false });
 
+const coWatcherSchema = new Schema({
+  userId: { type: String, required: true },
+  name: { type: String, required: true },
+  avatar: { type: String, default: null },
+}, { _id: false });
+
 const watchedShowSchema = new Schema({
   id: { type: Number, required: true },
   name: { type: String, required: true },
@@ -64,6 +78,7 @@ const watchedShowSchema = new Schema({
   totalSeasons: { type: Number, required: true },
   totalEpisodes: { type: Number, required: true },
   watchedEpisodes: { type: Map, of: [Number], default: {} },
+  coWatchers: { type: [coWatcherSchema], default: [] },
 }, { _id: false });
 
 const watchedMovieSchema = new Schema({
@@ -73,7 +88,14 @@ const watchedMovieSchema = new Schema({
   addedAt: { type: String, required: true },
   watched: { type: Boolean, default: false },
   watchedAt: { type: String, default: null },
+  coWatchers: { type: [coWatcherSchema], default: [] },
 }, { _id: false });
+
+const friendSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending', 'accepted'], required: true },
+  initiatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+}, { _id: false, timestamps: { createdAt: true, updatedAt: false } });
 
 const userSchema = new Schema<IUserDocument>(
   {
@@ -104,6 +126,7 @@ const userSchema = new Schema<IUserDocument>(
     shows: [watchedShowSchema],
     movies: [watchedMovieSchema],
     lists: [customListSchema],
+    friends: { type: [friendSchema], default: [] },
   },
   {
     timestamps: true,
@@ -144,6 +167,7 @@ userSchema.set('toJSON', {
           totalSeasons: show.totalSeasons,
           totalEpisodes: show.totalEpisodes,
           watchedEpisodes: we instanceof Map ? Object.fromEntries(we) : (we || {}),
+          coWatchers: show.coWatchers || [],
         };
       });
     }

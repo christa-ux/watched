@@ -41,6 +41,34 @@ export interface TMDBMovie {
   runtime?: number;
 }
 
+export interface CoWatcher {
+  userId: string;
+  name: string;
+  avatar: string | null;
+}
+
+export interface CoWatcherWithProgress extends CoWatcher {
+  watchedCount: number;
+  watchedEpisodes?: Record<string, number[]>;
+  watched?: boolean; // for movies
+}
+
+export interface Friend {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  compatibilityScore: number;
+}
+
+export interface FriendRequest {
+  userId: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  initiatedByMe: boolean;
+}
+
 export interface WatchedShow {
   id: number;
   name: string;
@@ -49,6 +77,7 @@ export interface WatchedShow {
   totalSeasons: number;
   totalEpisodes: number;
   watchedEpisodes: Record<number, number[]>; // seasonNumber -> episodeNumbers[]
+  coWatchers: CoWatcher[];
 }
 
 export interface WatchedMovie {
@@ -58,6 +87,7 @@ export interface WatchedMovie {
   addedAt: string;
   watched: boolean;
   watchedAt: string | null;
+  coWatchers: CoWatcher[];
 }
 
 export interface CustomList {

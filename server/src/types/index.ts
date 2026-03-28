@@ -1,3 +1,9 @@
+export interface CoWatcher {
+  userId: string;
+  name: string;
+  avatar: string | null;
+}
+
 // Shared types matching frontend
 export interface WatchedShow {
   id: number;
@@ -7,6 +13,7 @@ export interface WatchedShow {
   totalSeasons: number;
   totalEpisodes: number;
   watchedEpisodes: Record<number, number[]>;
+  coWatchers: CoWatcher[];
 }
 
 export interface WatchedMovie {
@@ -16,6 +23,7 @@ export interface WatchedMovie {
   addedAt: string;
   watched: boolean;
   watchedAt: string | null;
+  coWatchers: CoWatcher[];
 }
 
 export interface CustomList {

@@ -1,21 +1,36 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Film, Search } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import MovieCard from '../components/MovieCard';
-import type { WatchedMovie } from '../types';
+import CoWatchModal from '../components/CoWatchModal';
+import { friendsApi } from '../api/friends';
+import type { WatchedMovie, CoWatcher } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const FAVORITE_MOVIES_LIST = 'Favorite Movies';
 
 export default function Movies() {
+  const { isAuthenticated } = useAuth();
   const movies = useStore((state) => state.movies);
   const removeMovie = useStore((state) => state.removeMovie);
   const toggleMovieWatched = useStore((state) => state.toggleMovieWatched);
+  const updateMovieCoWatchers = useStore((state) => state.updateMovieCoWatchers);
   const lists = useStore((state) => state.lists);
   const createList = useStore((state) => state.createList);
   const addToList = useStore((state) => state.addToList);
   const removeFromList = useStore((state) => state.removeFromList);
+
   const [filter, setFilter] = useState<'all' | 'watched' | 'unwatched'>('all');
+  const [coWatchMovie, setCoWatchMovie] = useState<WatchedMovie | null>(null);
+  const [coWatchProgress, setCoWatchProgress] = useState<Record<number, (CoWatcher & { watched: boolean })[]>>({});
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    friendsApi.getCowatchProgress().then((data) => {
+      setCoWatchProgress(data.movies as Record<number, (CoWatcher & { watched: boolean })[]>);
+    }).catch(() => {});
+  }, [isAuthenticated, movies]);
 
   const favoriteList = lists.find((l) => l.name === FAVORITE_MOVIES_LIST);
 
@@ -51,6 +66,15 @@ export default function Movies() {
     [favoriteList, isMovieFavorite, createList, addToList, removeFromList]
   );
 
+  const handleSaveCoWatchers = async (coWatchers: CoWatcher[]) => {
+    if (!coWatchMovie) return;
+    updateMovieCoWatchers(coWatchMovie.id, coWatchers);
+    await friendsApi.updateMovieCoWatchers(coWatchMovie.id, coWatchers);
+    friendsApi.getCowatchProgress().then((data) => {
+      setCoWatchProgress(data.movies as Record<number, (CoWatcher & { watched: boolean })[]>);
+    }).catch(() => {});
+  };
+
   const filteredMovies = movies.filter((movie) => {
     if (filter === 'watched') return movie.watched;
     if (filter === 'unwatched') return !movie.watched;
@@ -79,9 +103,7 @@ export default function Movies() {
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                filter === f
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                filter === f ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               {f === 'unwatched' ? 'To Watch' : f}
@@ -96,9 +118,11 @@ export default function Movies() {
             <MovieCard
               key={movie.id}
               movie={movie}
+              coWatcherProgress={coWatchProgress[movie.id]}
               onRemove={() => removeMovie(movie.id)}
               onToggleWatched={() => toggleMovieWatched(movie.id)}
               onFavorite={() => toggleFavorite(movie)}
+              onCoWatch={() => setCoWatchMovie(movie)}
               isFavorite={isMovieFavorite(movie.id)}
             />
           ))}
@@ -124,6 +148,15 @@ export default function Movies() {
             </Link>
           )}
         </div>
+      )}
+
+      {coWatchMovie && (
+        <CoWatchModal
+          title={coWatchMovie.title}
+          currentCoWatchers={coWatchMovie.coWatchers ?? []}
+          onSave={handleSaveCoWatchers}
+          onClose={() => setCoWatchMovie(null)}
+        />
       )}
     </div>
   );

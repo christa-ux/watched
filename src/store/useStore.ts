@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { WatchedShow, WatchedMovie, CustomList, ListItem } from '../types';
+import type { WatchedShow, WatchedMovie, CustomList, ListItem, CoWatcher } from '../types';
 
 interface AppState {
   shows: WatchedShow[];
@@ -27,6 +27,10 @@ interface AppState {
   renameList: (id: string, name: string) => void;
   addToList: (listId: string, item: Omit<ListItem, 'addedAt'>) => void;
   removeFromList: (listId: string, itemId: number) => void;
+
+  // Co-watching
+  updateShowCoWatchers: (showId: number, coWatchers: CoWatcher[]) => void;
+  updateMovieCoWatchers: (movieId: number, coWatchers: CoWatcher[]) => void;
 
   // Stats
   getStats: () => {
@@ -57,6 +61,7 @@ export const useStore = create<AppState>()(
               ...show,
               addedAt: new Date().toISOString(),
               watchedEpisodes: {},
+              coWatchers: [],
             },
           ],
         }));
@@ -151,6 +156,7 @@ export const useStore = create<AppState>()(
               addedAt: new Date().toISOString(),
               watched: false,
               watchedAt: null,
+              coWatchers: [],
             },
           ],
         }));
@@ -231,6 +237,22 @@ export const useStore = create<AppState>()(
               items: list.items.filter((i) => i.id !== itemId),
             };
           }),
+        }));
+      },
+
+      updateShowCoWatchers: (showId, coWatchers) => {
+        set((state) => ({
+          shows: state.shows.map((s) =>
+            s.id === showId ? { ...s, coWatchers } : s
+          ),
+        }));
+      },
+
+      updateMovieCoWatchers: (movieId, coWatchers) => {
+        set((state) => ({
+          movies: state.movies.map((m) =>
+            m.id === movieId ? { ...m, coWatchers } : m
+          ),
         }));
       },
 
