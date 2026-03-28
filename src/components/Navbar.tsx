@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Home, Tv, Film, ListVideo, Search, Sparkles, LogOut, User, Users, Upload, Download } from 'lucide-react';
+import { Home, Tv, Film, ListVideo, Search, Sparkles, LogOut, User, Users /*, Upload, Download*/ } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { friendsApi } from '../api/friends';
 
@@ -14,11 +14,11 @@ const navItems = [
 ];
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout, isLoading, syncToServer, syncFromServer } = useAuth();
+  const { user, isAuthenticated, logout, isLoading /*, syncToServer, syncFromServer*/ } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
+  // const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -32,7 +32,7 @@ export default function Navbar() {
     setShowDropdown(false);
   };
 
-  const handleSync = async (direction: 'push' | 'pull') => {
+  /* const handleSync = async (direction: 'push' | 'pull') => {
     setSyncStatus('syncing');
     try {
       if (direction === 'push') await syncToServer();
@@ -43,7 +43,7 @@ export default function Navbar() {
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 2000);
     }
-  };
+  }; */
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
@@ -129,6 +129,7 @@ export default function Navbar() {
                           <p className="text-sm font-medium text-gray-900">{user.name}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
+                        {/* Sync buttons — uncomment to re-enable
                         <div className="border-b border-gray-100 px-4 py-2">
                           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">Sync data</p>
                           <div className="flex gap-2">
@@ -154,6 +155,7 @@ export default function Navbar() {
                           {syncStatus === 'done' && <p className="mt-1 text-center text-xs text-green-600">Done!</p>}
                           {syncStatus === 'error' && <p className="mt-1 text-center text-xs text-red-500">Failed</p>}
                         </div>
+                        */}
                         <button
                           onClick={handleLogout}
                           className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
