@@ -13,7 +13,7 @@ export interface WatchedShow {
   totalSeasons: number;
   totalEpisodes: number;
   watchedEpisodes: Record<number, number[]>;
-  coWatchers: CoWatcher[];
+  coWatchers?: CoWatcher[];
 }
 
 export interface WatchedMovie {
@@ -23,7 +23,7 @@ export interface WatchedMovie {
   addedAt: string;
   watched: boolean;
   watchedAt: string | null;
-  coWatchers: CoWatcher[];
+  coWatchers?: CoWatcher[];
 }
 
 export interface CustomList {
