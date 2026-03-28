@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Home, Tv, Film, ListVideo, Search, Sparkles, LogOut, User, Users } from 'lucide-react';
+import { Home, Tv, Film, ListVideo, Search, Sparkles, LogOut, User, Users, Upload, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { friendsApi } from '../api/friends';
 
@@ -14,10 +14,11 @@ const navItems = [
 ];
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, logout, isLoading, syncToServer, syncFromServer } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -29,6 +30,19 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
+  };
+
+  const handleSync = async (direction: 'push' | 'pull') => {
+    setSyncStatus('syncing');
+    try {
+      if (direction === 'push') await syncToServer();
+      else await syncFromServer();
+      setSyncStatus('done');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    } catch {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    }
   };
 
   return (
@@ -114,6 +128,31 @@ export default function Navbar() {
                         <div className="border-b border-gray-100 px-4 py-2">
                           <p className="text-sm font-medium text-gray-900">{user.name}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
+                        </div>
+                        <div className="border-b border-gray-100 px-4 py-2">
+                          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">Sync data</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSync('push')}
+                              disabled={syncStatus === 'syncing'}
+                              className="flex flex-1 items-center justify-center gap-1 rounded-md bg-indigo-50 px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
+                              title="Save your local data to the server"
+                            >
+                              <Upload className="h-3 w-3" />
+                              Save
+                            </button>
+                            <button
+                              onClick={() => handleSync('pull')}
+                              disabled={syncStatus === 'syncing'}
+                              className="flex flex-1 items-center justify-center gap-1 rounded-md bg-indigo-50 px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
+                              title="Load your data from the server"
+                            >
+                              <Download className="h-3 w-3" />
+                              Load
+                            </button>
+                          </div>
+                          {syncStatus === 'done' && <p className="mt-1 text-center text-xs text-green-600">Done!</p>}
+                          {syncStatus === 'error' && <p className="mt-1 text-center text-xs text-red-500">Failed</p>}
                         </div>
                         <button
                           onClick={handleLogout}
