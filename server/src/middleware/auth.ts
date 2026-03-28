@@ -79,19 +79,20 @@ export const setTokenCookies = (
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
 
 export const clearTokenCookies = (res: Response) => {
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.clearCookie('accessToken', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
+  res.clearCookie('refreshToken', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
 };
