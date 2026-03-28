@@ -1,3 +1,5 @@
+import type { WatchedShow, WatchedMovie, CustomList } from '../types';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export interface User {
@@ -12,9 +14,9 @@ export interface AuthResponse {
 }
 
 export interface SyncData {
-  shows: unknown[];
-  movies: unknown[];
-  lists: unknown[];
+  shows: WatchedShow[];
+  movies: WatchedMovie[];
+  lists: CustomList[];
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
