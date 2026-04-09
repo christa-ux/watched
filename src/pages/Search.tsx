@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Check, Tv, Film, ListPlus, User, ArrowLeft, Loader2 } from 'lucide-react';
+import { Check, Tv, Film, ListPlus, User, ArrowLeft, Loader2, Bookmark } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import { searchMulti, getImageUrl, getShowDetails, getMovieDetails, getPersonCredits } from '../api/tmdb';
 import { useStore } from '../store/useStore';
@@ -20,6 +20,8 @@ export default function Search() {
   const addShow = useStore((state) => state.addShow);
   const addMovie = useStore((state) => state.addMovie);
   const addToList = useStore((state) => state.addToList);
+  const markSeasonWatched = useStore((state) => state.markSeasonWatched);
+  const toggleMovieWatched = useStore((state) => state.toggleMovieWatched);
 
   const handleSearch = async (query: string) => {
     setLoading(true);
@@ -77,6 +79,42 @@ export default function Search() {
         title: details.title,
         posterPath: details.poster_path,
       });
+    } catch {
+      setError('Failed to add movie. Please try again.');
+    }
+  };
+
+  const handleAddShowWatched = async (id: number) => {
+    try {
+      const details = await getShowDetails(id);
+      addShow({
+        id: details.id,
+        name: details.name,
+        posterPath: details.poster_path,
+        totalSeasons: details.number_of_seasons ?? 0,
+        totalEpisodes: details.number_of_episodes ?? 0,
+      });
+      if (details.seasons) {
+        for (const season of details.seasons) {
+          if (season.season_number > 0 && season.episode_count > 0) {
+            markSeasonWatched(details.id, season.season_number, season.episode_count);
+          }
+        }
+      }
+    } catch {
+      setError('Failed to add show. Please try again.');
+    }
+  };
+
+  const handleAddMovieWatched = async (id: number) => {
+    try {
+      const details = await getMovieDetails(id);
+      addMovie({
+        id: details.id,
+        title: details.title,
+        posterPath: details.poster_path,
+      });
+      toggleMovieWatched(details.id);
     } catch {
       setError('Failed to add movie. Please try again.');
     }
@@ -177,29 +215,34 @@ export default function Search() {
                 </div>
               )}
 
-              <button
-                onClick={() =>
-                  isTV ? handleAddShow(item.id) : handleAddMovie(item.id)
-                }
-                disabled={isAdded}
-                className={`flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isAdded
-                    ? 'bg-green-50 text-green-600'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-500'
-                }`}
-              >
-                {isAdded ? (
-                  <>
+              {isAdded ? (
+                <button
+                  disabled
+                  className="flex items-center gap-1 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-600"
+                >
+                  <Check className="h-4 w-4" />
+                  Added
+                </button>
+              ) : (
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => isTV ? handleAddShow(item.id) : handleAddMovie(item.id)}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                    title="Add to watchlist"
+                  >
+                    <Bookmark className="h-4 w-4" />
+                    Watchlist
+                  </button>
+                  <button
+                    onClick={() => isTV ? handleAddShowWatched(item.id) : handleAddMovieWatched(item.id)}
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+                    title="Mark as watched"
+                  >
                     <Check className="h-4 w-4" />
-                    Added
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </>
-                )}
-              </button>
+                    Watched
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
