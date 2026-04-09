@@ -405,7 +405,7 @@ export default function Assistant() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Assistant</h1>
           <p className="mt-1 text-gray-500">Commands & recommendations</p>
@@ -438,7 +438,7 @@ export default function Assistant() {
       </div>
 
       {tab === 'commands' ? (
-        <div className="flex h-[calc(100vh-14rem)] flex-col">
+        <div className="flex h-[calc(100vh-18rem)] sm:h-[calc(100vh-14rem)] flex-col">
           <div className="flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white">
             <div className="space-y-4 p-4">
               {messages.map((message, index) => (

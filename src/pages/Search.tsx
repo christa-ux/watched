@@ -116,8 +116,8 @@ export default function Search() {
         </div>
 
         <div className="flex flex-1 flex-col">
-          <div className="flex items-start justify-between gap-2">
-            <div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <h3 className="font-medium text-gray-900">{name}</h3>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
                 <span
@@ -137,7 +137,7 @@ export default function Search() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               {lists.length > 0 && (
                 <div className="relative">
                   <button
